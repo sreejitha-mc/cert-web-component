@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-  <title>blockchain-certificate demo</title>
+  <title>View and Verify</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
   <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
@@ -18,8 +18,24 @@
 <body>
 
 <div class="container">
-  <validate-certificate href="./sample_cert-valid-2.0.json">
+  <!-- <validate-certificate href="./sample_cert-valid-2.0.json">
     <blockchain-certificate href="./sample_cert-valid-2.0.json"></blockchain-certificate>
+  </validate-certificate> -->
+
+  <validate-certificate href="./uploaded/filename.json">
+    <blockchain-certificate href="./uploaded/filename.json"></blockchain-certificate>
+  </validate-certificate>
+
+  <div>
+    <form action="http://localhost/startmin/upload_cert.php" method="post" enctype="multipart/form-data">
+      Select image to upload:
+      <input type="file" name="fileToUpload" id="fileToUpload">
+      <input type="submit" value="Upload Image" name="submit">
+  </form>
+  </div>
+
+  <validate-certificate href="./tools-certs/test.json">
+    <blockchain-certificate href="./tools-certs/test.json"></blockchain-certificate>
   </validate-certificate>
 </div>
 

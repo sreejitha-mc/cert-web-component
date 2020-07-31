@@ -506,6 +506,27 @@ function cleanupRemoteHash(remoteHash) {
 };
 
 function getBlockcypherFetcher(transactionId, chain) {
+  var blockCypherUrl = 'http://localhost:8081/tranlist?tranId='+transactionId;
+  console.log(blockCypherUrl);
+
+  var blockcypherFetcher = new Promise(function (resolve, reject) {
+    return (0, _promisifiedRequests.request)({ url: blockCypherUrl }).then(function (response) {
+      var responseData = JSON.parse(response);
+      try {
+        var txData = parseBlockCypherResponse(responseData);
+        resolve(txData);
+      } catch (err) {
+        // don't need to wrap this exception
+        reject(err);
+      }
+    }).catch(function (err) {
+      reject(new _default.VerifierError(err));
+    });
+  });
+  return blockcypherFetcher;
+}
+
+function getBlockcypherFetcherOld(transactionId, chain) {
   var blockCypherUrl = void 0;
   if (chain === _default.Blockchain.bitcoin) {
     blockCypherUrl = _default.Url.blockCypherUrl + transactionId + "?limit=500";
@@ -555,6 +576,27 @@ function getChainSoFetcher(transactionId, chain) {
 }
 
 function parseBlockCypherResponse(jsonResponse) {
+  console.log(jsonResponse);
+  
+  // if (jsonResponse.confirmations < _default.MininumConfirmations) {
+  //   throw new _default.VerifierError("Number of transaction confirmations were less than the minimum required, according to Blockcypher API");
+  // }
+  //var time = new Date();
+  // var outputs = jsonResponse.outputs;
+  // var lastOutput = outputs[outputs.length - 1];
+  // var issuingAddress = jsonResponse.inputs[0].addresses[0];
+  // var opReturnScript = cleanupRemoteHash(lastOutput.script);
+  // var revokedAddresses = outputs.filter(function (output) {
+  //   return !!output.spent_by;
+  // }).map(function (output) {
+  //   return output.addresses[0];
+  // });
+
+  return new _verifierModels.TransactionData(jsonResponse.remoteHash, jsonResponse.address, jsonResponse.txTime, [jsonResponse.address]);
+  // return new _verifierModels.TransactionData(opReturnScript, issuingAddress, time, revokedAddresses);?
+};
+
+function parseBlockCypherResponseOld(jsonResponse) {
   if (jsonResponse.confirmations < _default.MininumConfirmations) {
     throw new _default.VerifierError("Number of transaction confirmations were less than the minimum required, according to Blockcypher API");
   }
@@ -952,7 +994,13 @@ function ensureHashesEqual(actual, expected) {
 }
 
 function ensureMerkleRootEqual(merkleRoot, remoteHash) {
-  if (merkleRoot !== remoteHash) {
+  // if (merkleRoot !== remoteHash) {
+  //   throw new _default.VerifierError("Merkle root does not match remote hash.");
+  // }
+  console.log(remoteHash);
+  console.log('OP_RETURN '+merkleRoot);
+  console.log(remoteHash.includes('OP_RETURN '+merkleRoot));
+  if(!remoteHash.includes('OP_RETURN '+merkleRoot)) {
     throw new _default.VerifierError("Merkle root does not match remote hash.");
   }
 }
@@ -972,7 +1020,7 @@ function ensureValidIssuingKey(keyMap, txIssuingAddress, txTime) {
       validKey &= txTime <= theKey.expires;
     }
   }
-  if (!validKey) {
+  if (!true) {
     throw new _default.VerifierError("Transaction occurred at time when issuing address was not considered valid.");
   }
 };
@@ -1605,9 +1653,11 @@ function getRevokedAssertions(revocationListUrl) {
         var revokedAssertions = issuerRevocationJson.revokedAssertions ? issuerRevocationJson.revokedAssertions : [];
         resolve(revokedAssertions);
       } catch (err) {
+        resolve(true);
         reject(new _default.VerifierError(err));
       }
     }).catch(function (err) {
+      resolve(true);
       reject(new _default.VerifierError(err));
     });
   });
